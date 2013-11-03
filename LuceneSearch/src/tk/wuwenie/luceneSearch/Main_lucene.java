@@ -61,6 +61,11 @@ public class Main_lucene {
 					if (args.length >= i + 3) {
 						makeIndexAdvanceNext(args[i + 1], args[i + 2]);
 					}
+				} else if (args[i].equals("-AI2")) { // 如果是增强建立索引
+
+					if (args.length >= i + 3) {
+						makeIndexAdvance2(args[i + 1], args[i + 2]);
+					}
 				} else if (args[i].equals("-S")) {// 如果是普通查询
 
 					if (args.length >= i + 3) {
@@ -114,6 +119,16 @@ public class Main_lucene {
 		}
 
 	}// main
+
+	public static void makeIndexAdvance2(String f, String i) {
+
+		try {
+			TxtFileIndexer.IndexerInAdvance(i);
+			TxtFileIndexer.makeIndexAdvance2(f);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static void makeIndexAdvanceNext(String f, String i) {
 		try {
@@ -193,6 +208,7 @@ public class Main_lucene {
 				+ "v0.0.5 20130831-20130903\n"
 				+ "v0.0.6 20130903-20130906\n"
 				+ "v0.0.7 20130906-20130920\n"
+				+ "v0.0.8 20130920-20131103\n"
 				+ "\nAuthor wuwenjie\n"
 				+ "PowerBy Lucene "
 				+ ver
@@ -201,6 +217,7 @@ public class Main_lucene {
 				+ "UseAge:\n"
 				+ "-I make Index \t-I [file_tobeIndex] [file_saveIndex] {-UseRAM} -{showToken}\n"
 				+ "-AI make Index In Advance \t -AI [file_tobeIndex] [file_saveIndex]\n"
+				+ "-AI2 make Index In Advance \t -AI2 [file_tobeIndex] [file_saveIndex]\n"
 				+ "-S search \t-S [file_saveIndex] [Query]\n"
 				+ "-QPS QueryParserSearch \t-QPS [Index] [SpecialQuery] [Range]\n"
 				+ "-SQPS SortQueryParserSearch \t-SQPS [file_Index] [Query] [SearchRange] [Order]\n"

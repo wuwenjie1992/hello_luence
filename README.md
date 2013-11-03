@@ -17,6 +17,12 @@ a simple native search engine power by luence and nodejs
 ##ChangeLog
  * 20131006 
   * first init
+ * 20131103
+  * hello_lucene.js :
+  * improve large file (more than 100MB) transfer
+  * if search query is null then redirect to home.html
+  * LuceneSearch :
+  * add New index method AI2 (unstable)
 
 ##Author
  * [wuwenjie1992](http://wuwenjie.tk)

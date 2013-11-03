@@ -8,14 +8,14 @@ var querystring = require('querystring');
 var server ;
 var port = 6770;	//监听端口
 var count = 0;	//总共处理数
-var version= "0.0.6:20131002" ;
+var version= "0.0.6:20131101" ;
 
 var jarPath ="/home/wuwenjie/lucene.jar";
 var indexPath ="/media/linux_lenovo/L_index";
 
 homePage="home.html";
 
-var handle = {}
+var handle = {};
 handle["/"] = home;
 handle["/about"] = about;
 handle["/random"]= random;
@@ -48,8 +48,9 @@ function say(word) {
 	
 	var date = new Date();
 	console.log("\x1B[33m------ ------\x1B[39m");
-	console.log("\x1B[33m"+date.toUTCString()+":\n\t"+word+"\x1B[39m\n");
+	console.log("\x1B[33m"+date.toUTCString()+":\n\t"+word+"\x1B[39m");
 	//https://github.com/Marak/colors.js
+	
 }
 
 function execute(someFunction, value) {
@@ -210,67 +211,109 @@ function writeFileToClient(request,response,realPath){
 
 	console.log("Send File To Client '" + realPath+"'.");
 	
-	fs.readFile(realPath, "binary", function(err, file) {
-		if (err) {
-			throw500(response);
-		} else {
+	var fstat = fs.statSync(realPath);
+	var ftotal = fstat.size/1024/1024;
+	console.log("File '" + realPath+"' size is "+ftotal+" MB.");
+	
+	if(ftotal>100){	//如果文件大于100兆
+	
+		console.log("File '" + realPath+"' size larger than 100MB.");
 		
-			//------------MIME 处理-------------
-			var ext = path.extname(realPath);	//文件的后缀
-			console.log("File  extname is '" + ext +"'.");
-			
-			ext = ext ? ext.slice(1) : 'unknown';
-			//buf.slice([start], [end]) 裁 从第二个开始
-			var contentType = mimetypes[ext];
-			console.log("File MIME Types is '" + contentType +"'.");
-			
-			//如果在自定义MIME中，显示，不再，客户端下载
-			if(!(contentType === undefined )){	//全等（值和类型）
-				console.log("Send File in MIME types '" + realPath+"'.");
-				response.writeHead(200, {'Content-Type': contentType,'Server':'Wu'});
-				response.write( file, "binary");
-				response.end();
-			}else if ( ext == "mp4"|ext == "webm" ){	
-				//https://gist.github.com/paolorossi/1993068
-				
-				var stat = fs.statSync(realPath);
-				var total = stat.size;
-				/*
-				 * 206 Partial Content 服务器已经成功处理了部分GET请求
-				 * 使用此类响应实现[断点续传]或者将一个大文档分解为多个下载段同时下载
-				 */
-				if (request.headers['range']) {
-					var range = request.headers.range;
-					var parts = range.replace(/bytes=/, "").split("-");
-					var partialstart = parts[0];
-					var partialend = parts[1];
-						
-					var start = parseInt(partialstart, 10);
-					var end = partialend ? parseInt(partialend, 10) : total-1;
-					var chunksize = (end-start)+1;
-					console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
-						
-					var file = fs.createReadStream(realPath, {start: start, end: end});
-					response.writeHead(206, 
-							{ 'Content-Range': 'bytes ' + start + '-' + end + '/' + total, 
-								'Accept-Ranges': 'bytes', 'Content-Length': chunksize, 
-								'Content-Type': 'video/'+ext });
-					file.pipe(response);
-					} else {
-						console.log('ALL: ' + total);
-						response.writeHead(200, { 'Content-Length': total,
-									'Content-Type': 'video/'+ext });
-						fs.createReadStream(realPath).pipe(response);
-						}
-			}	//如果是mp4
-			else{
-				console.log("Send File Out of MIME types '" + realPath+"'.");
-				response.writeHead(200, {"Content-Disposition": "attachment;"+realPath});
-				response.write(file, "binary");
-				response.end();
-			}
-                }
+		howtosendfile(request,response,realPath,"",1);
+	
+	}else{
+	
+		fs.readFile(realPath, "binary", function(err, file) {
+			if (err) {
+				throw500(response);
+			} else {
+				howtosendfile(request,response,realPath,file,0);
+            }
       });
+	  
+	}
+	  
+}
+
+//如何发送文件
+function howtosendfile(request,response,realPath,file,large){
+
+	console.log("How to send file !");
+
+	//------------MIME 处理-------------
+	var ext = path.extname(realPath);	//文件的后缀
+	console.log("File  extname is '" + ext +"'.");
+	
+	ext = ext ? ext.slice(1) : 'unknown';
+	//buf.slice([start], [end]) 裁 从第二个开始
+	var contentType = mimetypes[ext];
+	console.log("File MIME Types is '" + contentType +"'.");
+
+	//如果在自定义MIME中，显示，不再，客户端下载
+	if(!(contentType === undefined )){	//全等（值和类型）
+	
+		if(large==0){
+			console.log("Send small File in MIME types '" + realPath+"'.");
+			response.writeHead(200, {'Content-Type': contentType,});
+			response.write( file, "binary");
+			response.end();
+		}
+		else{
+			console.log("Send File '" + realPath+"' use stream.");
+			//http://stackoverflow.com/questions/6926721/event-loop-for-large-files
+			var stream = fs.createReadStream(realPath, { bufferSize: 64 * 1024 });
+			stream.pipe(response);
+		}
+		
+	}else if ( ext == "mp4"|ext == "webm" ){	
+		//https://gist.github.com/paolorossi/1993068
+	
+		var stat = fs.statSync(realPath);
+		var total = stat.size;
+		/*
+		* 206 Partial Content 服务器已经成功处理了部分GET请求
+		* 使用此类响应实现[断点续传]或者将一个大文档分解为多个下载段同时下载
+		*/
+		if (request.headers['range']) {
+			var range = request.headers.range;
+			var parts = range.replace(/bytes=/, "").split("-");
+			var partialstart = parts[0];
+			var partialend = parts[1];
+
+			var start = parseInt(partialstart, 10);
+			var end = partialend ? parseInt(partialend, 10) : total-1;
+			var chunksize = (end-start)+1;
+			console.log('RANGE: ' + start + ' - ' + end + ' = ' + chunksize);
+
+			var file = fs.createReadStream(realPath, {start: start, end: end});
+			response.writeHead(206, 
+				{ 'Content-Range': 'bytes ' + start + '-' + end + '/' + total, 
+					'Accept-Ranges': 'bytes', 'Content-Length': chunksize, 
+					'Content-Type': 'video/'+ext });
+			file.pipe(response);
+		} else {
+			console.log('ALL: ' + total);
+			response.writeHead(200, { 'Content-Length': total,
+						'Content-Type': 'video/'+ext });
+			fs.createReadStream(realPath).pipe(response);
+			}
+	}	//如果是mp4
+	else{
+		console.log("Send File " + large + " '" + realPath+"' Out of MIME types.");
+		
+		if(large==0){
+			response.writeHead(200, {"Content-Disposition": "attachment;"+realPath});
+			response.write(file, "binary");
+			response.end();
+		}else{
+			console.log("Send File '" + realPath+"' use stream.");
+			var stream = fs.createReadStream(realPath, { bufferSize: 64 * 1024 });
+			response.writeHead(200, {"Content-Disposition": "attachment;"+realPath});
+			stream.pipe(response);
+		}
+		
+	}
+
 }
 
 //-----requestHandler----------------
@@ -324,6 +367,11 @@ function search(request,response,postData){
 	
 	queryStr=queryStr.replace(/"/g, "");	//替换，"
 	
+	//if search query is null then redirect to home.html
+	if (queryStr==''){
+		return301(response,homePage);
+	}else{
+	
 	//执行本地命令
 	var shell_name = "java -server -Xms1024m -Xmx1024m -jar "+ jarPath + " -SQPS " 
 					+ indexPath + " \"" + queryStr +"*\" name "+"\"\";";
@@ -338,6 +386,7 @@ function search(request,response,postData){
 	console.time('exec search');	//记时
 	execShellCommand(shell_all,response);	//使用本地shell执行命令并返回请求
 	console.timeEnd('exec search');
+	}
 } 
 
 //------执行命令-----------
@@ -409,10 +458,6 @@ function help (request,response){
 
 }
 
-start(route, handle);
-//启动服务器
-
-
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
@@ -436,3 +481,7 @@ process.on('uncaughtException', function(err) {
 process.on('SIGINT', function() {
   console.log('Got SIGINT.  Press Control-D to exit.');
 });
+
+
+start(route, handle);
+//启动服务器

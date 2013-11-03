@@ -345,6 +345,123 @@ public class TxtFileIndexer {
 
 	}
 
+	public static void makeIndexAdvance2(String dataDir_s) throws Exception {
+
+		File data_f = new File(dataDir_s);
+
+		ArrayList<File> daf = findCompliantFile(data_f,
+				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML)");
+		// 符合要求的文件 (.*\.txt|.*\.html|.*\.HTM|.*\.htm|.*\.HTML)
+
+		// ---------分组处理------------------
+		int fsize = daf.size();
+		int gs = getGroupSize(fsize);
+		int group = fsize / gs;
+		int big_group = group >> 2;
+		int big_gs = fsize / big_group;
+
+		System.out.println("All file :" + fsize + " Big Group:" + big_group
+				+ " big_gs:" + big_gs + " Processors:"
+				+ Runtime.getRuntime().availableProcessors() + "\n");
+
+		// -----IndexWriter设置------------
+		iwc.setMaxThreadStates(group + 2);
+		iwc.setMaxBufferedDocs(fsize >> 2);
+
+		System.out.println("\nRAMBufferSizeMB:" + iwc.getRAMBufferSizeMB()
+				+ "\nDefaultWriteLockTimeout:"
+				+ IndexWriterConfig.getDefaultWriteLockTimeout()
+				+ "\nOpenMode:" + iwc.getOpenMode() + "\nIndexDeletionPolicy:"
+				+ iwc.getIndexDeletionPolicy() + "\nWriteLockTimeout:"
+				+ iwc.getWriteLockTimeout() + "\nMergePolicy:"
+				+ iwc.getMergePolicy() + "\nMaxThreadStates:"
+				+ iwc.getMaxThreadStates() + "\nReaderPooling:"
+				+ iwc.getReaderPooling() + "\nRAMPerThreadHardLimitMB:"
+				+ iwc.getRAMPerThreadHardLimitMB()
+				+ "\nMaxBufferedDeleteTerms:" + iwc.getMaxBufferedDeleteTerms()
+				+ "\nMaxBufferedDocs:" + iwc.getMaxBufferedDocs()
+				+ "\nReaderTermsIndexDivisor:"
+				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:"
+				+ iwc.getReaderTermsIndexDivisor() + "\n");
+
+		indexWriter_cn = new IndexWriter(nioD, iwc); // 重用已定义的IndexWriter
+		// 一个IndexWriter对象可以被多个线程所共享
+
+		// --------------WriteDocThread----------------------
+
+		int in_big_gs = getGroupSize(fsize / big_group) * 3; // 组大小,3464
+		int in_big_gn = fsize / big_group / in_big_gs; // 组数,3
+
+		System.out
+				.println("in_big_gs:" + in_big_gs + " in_big_gn:" + in_big_gn);
+
+		for (int i = 0; i < big_group; i++) { // 4
+
+			WriteDocThread wdt = null;
+
+			for (int j = 0; j < in_big_gn; j++) { // 3
+
+				int beg = i * big_gs + j * in_big_gs;
+				int end = i * big_gs + (j + 1) * in_big_gs;
+
+				System.out.println(i + ":" + j + " " + beg + ":" + end);
+
+				List<File> sub_l = daf.subList(beg, end);
+				// 按分组结果，进行分配【处理文件队列】
+
+				wdt = new WriteDocThread("t" + i + ":" + j, sub_l);
+				// No enclosing instance of type TxtFileIndexer is
+				// accessible.
+				// Must qualify the allocation with an enclosing instance of
+				// type
+				// TxtFileIndexer
+				// (e.g. x.new A() where x is an instance of
+				// TxtFileIndexer).
+				// - The value of the local variable wdt is not used
+				// blog.csdn.net/sunny2038/article/details/6926079
+
+				wdt.start();
+
+			}
+
+			System.out.println(i * big_gs + in_big_gs * in_big_gn + ":"
+					+ (i + 1) * big_gs);
+
+			WriteDocThread wdts = new WriteDocThread("t_f", daf.subList(i
+					* big_gs + in_big_gs * in_big_gn, (i + 1) * big_gs));
+
+			wdts.run();
+
+			wdt.join();
+
+		}
+
+		// 分组结果可能会少计入【待处理文件】
+		int Missingbegin = big_group * big_gs;
+
+		if (Missingbegin < fsize) {
+
+			WriteDocThread wdts = new WriteDocThread("t_f", daf.subList(
+					Missingbegin, fsize));
+			System.out.println("\nMissing:" + Missingbegin + ","
+					+ daf.subList(Missingbegin, fsize).size());
+			wdts.start();
+		}
+
+		// new Thread() {public void run() {}//run
+		// };//Thread
+
+		// IndexWriter.isLocked(nioD);
+
+		// addIndexes(Directory... dirs)
+		// Adds all segments from an array of indexes into this index.
+
+		// updateDocument(Term term, Iterable<? extends IndexableField> doc)
+		// Updates a document by first deleting the document(s) containing term
+		// and then adding the new document.
+
+	}
+
 	// IndexWriter addDocument线程 使用前调用IndexerInAdvance
 	public static class WriteDocThread extends Thread {
 
@@ -369,9 +486,6 @@ public class TxtFileIndexer {
 			for (i = 1; i <= subf_l; i++) {
 
 				try {
-					// System.out.println("Begin processing:"
-					// + subf.get(i).getName() + " thread:"
-					// + this.getName() + " id:" + this.getId());
 
 					Document doc_cn = new Document();
 
@@ -425,6 +539,13 @@ public class TxtFileIndexer {
 			}
 
 			System.out.println("thread " + this.getName() + " completed.");
+
+			try {
+				this.finalize();
+			} catch (Throwable e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 		}// run
 
@@ -571,7 +692,7 @@ public class TxtFileIndexer {
 		} // call
 
 	} // WriteDocInConcurrent
-	// --------------------------------------------------------------------------
+		// --------------------------------------------------------------------------
 
 	// 查找符合要求的文件
 	static ArrayList<File> findCompliantFile(File f, String compliant) {
@@ -608,7 +729,8 @@ public class TxtFileIndexer {
 
 		return Compliance_f;
 	}// findComplianceFile
-	// 分组方法
+		// 分组方法
+
 	static int getGroupSize(int size) { // 确定组数
 		int egn = 0;
 		egn = size / ((int) (Math.log(size) / Math.log(2)) + 1);
