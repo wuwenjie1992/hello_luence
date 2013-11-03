@@ -8,7 +8,7 @@ var querystring = require('querystring');
 var server ;
 var port = 6770;	//监听端口
 var count = 0;	//总共处理数
-var version= "0.0.6:20131101" ;
+var version= "0.0.6:20131103" ;
 
 var jarPath ="/home/wuwenjie/lucene.jar";
 var indexPath ="/media/linux_lenovo/L_index";
