@@ -1,8 +1,12 @@
 package tk.wuwenie.luceneSearch;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.cjk.CJKAnalyzer;
@@ -32,10 +36,10 @@ import org.apache.lucene.util.Version;
 /**
  * 
  * @author wuwenjie
- * @import lucene-core-4.3.0.jar lucene-analyzers-common-4.3.0.jar
- *         lucene-queryparser-4.3.0.jar
+ * @import lucene-core-4.5.0.jar lucene-analyzers-common-4.5.0.jar
+ *         lucene-queryparser-4.5.0.jar
  * 
- * @demo lucene-4.3.0/docs/demo/src-html/org/apache/lucene/demo/SearchFiles.html
+ * @demo lucene-4.5.1/docs/demo/src-html/org/apache/lucene/demo/SearchFiles.html
  * 
  * 
  */
@@ -137,8 +141,8 @@ public class TxtFileSearcher {
 		}
 
 		// --------支持语句查询de查询类-----------
-		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_44);
-		QueryParser qupa = new QueryParser(Version.LUCENE_44, range,
+		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+		QueryParser qupa = new QueryParser(Version.LUCENE_45, range,
 				luceneAnalyzer);
 		// public QueryParser(Version matchVersion,String f, Analyzer a)
 		// Create a query parser.
@@ -221,8 +225,8 @@ public class TxtFileSearcher {
 		IndexSearcher searcher = new IndexSearcher(reader);
 
 		// --------支持语句查询de查询类-----------
-		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_44);// 中文分析器
-		QueryParser qupa = new QueryParser(Version.LUCENE_44, SearchRange,
+		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_45);// 中文分析器
+		QueryParser qupa = new QueryParser(Version.LUCENE_45, SearchRange,
 				cluceneAnalyzer);
 		Query qParser = qupa.parse(searchstr);
 
@@ -237,7 +241,7 @@ public class TxtFileSearcher {
 			docDefault = new SortField(order, SortField.Type.LONG);
 		} else if (order == "size") {
 			docDefault = new SortField(order, SortField.Type.LONG);
-		} else if (order != null) {
+		} else if (order == null) {
 			docDefault = new SortField(order, SortField.Type.STRING);
 		}
 		sort.setSort(docDefault);
@@ -245,7 +249,7 @@ public class TxtFileSearcher {
 		// TopDocs results = searcher.search(qParser, 10, sort);
 		// public TopFieldDocs search(Query query,int n,Sort sort)
 
-		int numHits = 70;
+		int numHits = 20;
 		// 排序设置器
 		// sujitpal.blogspot.jp/2010/02/handling-lucene-hits-deprecation-in.html
 		TopFieldCollector collector = TopFieldCollector.create(sort, numHits,
@@ -300,6 +304,10 @@ public class TxtFileSearcher {
 		// Collector.collect(int) is called for every matching document.
 		TopDocs results = collector.topDocs();
 
+		// searchAfter Finds the top n hits for query where all results are
+		// after a previous result (after).
+		// http://www.cnblogs.com/yuanermen/archive/2012/02/09/2343993.html
+
 		// MultiFieldQueryParser
 		// http://blog.csdn.net/lizhihai_99/article/details/5559423
 
@@ -327,17 +335,21 @@ public class TxtFileSearcher {
 
 			Long size = Long.parseLong(document.get("size"));
 
+			// String text = document.get("contents");
 			// Class Document get public final String get(String name)
 			// 返回name对应的字符串
 			System.out.println("File No:" + i + "\tdoc:" + hits[i].doc
 					+ " score:" + hits[i].score + "\n\tPath:" + path
 					+ "\n\tName:" + name + "\tModified:" + mod.toString()
-					+ "\n\tSize:" + size + "\n");
+					+ "\n\tSize:" + size);
 
 			// Explanation explanation = searcher.explain(qParser, hits[i].doc);
 			// 返回一个说明文档介绍了如何对查询发还
 			// System.out.println("\tDescribes the score : \n\t\t"
 			// + explanation.toString() + "\n");
+
+			getMatchString(path, searchstr);
+
 		}
 
 		reader.close();
@@ -351,4 +363,56 @@ public class TxtFileSearcher {
 
 	}// SortQueryParserSearch
 
+	// 进入文件查找字符
+	public static void getMatchString(String file_path, String searchstr) {
+
+		File file = new File(file_path);
+		String text = null;
+		String outStr = "";
+
+		if (file.exists()) {
+
+			if ((file.length() >> 20) <= 2) {
+
+				try {
+					BufferedReader input = new BufferedReader(new FileReader(
+							file));
+					StringBuffer buffer = new StringBuffer();
+
+					String lntext;
+					while ((lntext = input.readLine()) != null)
+						buffer.append(lntext + "\n");
+
+					text = buffer.toString();
+					// System.out.println("\ntext:\n" + text);
+
+				} catch (IOException ioException) {
+					System.err.println("File Error!");
+				}
+
+				String[] sArray = searchstr.split(" ");
+
+				for (int i = 0; i < sArray.length; i++) {
+
+					// System.out.println("sArray[" + i + "]" + sArray[i]);
+
+					Pattern pat = Pattern.compile(".{0,20}" + sArray[i]
+							+ ".{0,30}");// .{0,15}三吴.{0,15}
+					Matcher mat = pat.matcher(text);
+					boolean rs = mat.find();
+					if (rs) {
+						outStr += "..." + mat.group(0);
+					} else {
+						outStr += "";
+					}
+
+				}
+
+				System.out.println("\n\t" + outStr + "\n");
+			} else {
+				System.out.println("\n\tfile too large !\n");
+			}
+		}
+
+	}// getMatchString
 }

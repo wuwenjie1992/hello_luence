@@ -4,16 +4,17 @@ var url = require("url");
 var fs = require("fs");	//file system
 var path = require("path");	//路径处理
 var querystring = require('querystring');
+var cluster = require('cluster');
 
 var server ;
 var port = 6770;	//监听端口
 var count = 0;	//总共处理数
-var version= "0.0.6:20131103" ;
+var version= "0.0.6:20131116" ;
 
 var jarPath ="/home/wuwenjie/lucene.jar";
 var indexPath ="/media/linux_lenovo/L_index";
 
-homePage="home.html";
+var homePage="home.html";
 
 var handle = {};
 handle["/"] = home;
@@ -51,6 +52,8 @@ function say(word) {
 	console.log("\x1B[33m"+date.toUTCString()+":\n\t"+word+"\x1B[39m");
 	//https://github.com/Marak/colors.js
 	
+	if (cluster.isWorker)
+		console.log("\x1B[33mWorker"+cluster.worker.id+"\x1B[39m");
 }
 
 function execute(someFunction, value) {
@@ -90,7 +93,7 @@ function start(route, handle) {
 
     request.addListener("data", function(postDataChunk) {
       postData += postDataChunk;
-      console.log("Received POST data chunk '"+postDataChunk + "'.");
+      console.log("Received POST DATA '"+postDataChunk + "'.");
     });
 
 	//Class: http.ClientRequest
@@ -310,6 +313,13 @@ function howtosendfile(request,response,realPath,file,large){
 			var stream = fs.createReadStream(realPath, { bufferSize: 64 * 1024 });
 			response.writeHead(200, {"Content-Disposition": "attachment;"+realPath});
 			stream.pipe(response);
+			
+			//流错误时
+			stream.on('error', function(err){
+				response.statusCode = 500;
+				response.end('Internal Server Error');
+			});
+			
 		}
 		
 	}
@@ -325,7 +335,7 @@ function home(request,response,postData) {
   console.log("Request handler 'home' was called.");
   
   if(fsExistSync(homePage)){
-	writeFileToClient(request,response,homePage);
+		writeFileToClient(request,response,homePage);
   }else{
 	  throw404(response,homePage);
 	  console.log("Request handler 'home' homePage not found.");
@@ -360,12 +370,12 @@ function search(request,response,postData){
 	console.log("\t'search' request url is "+ReUrl);
 	
 	var query = url.parse(ReUrl).query;	//请求的参数集合
-	console.log("\t'search' request query is "+query);
+	console.log("\t'search' request query is '"+query+"'");
 	
 	var queryStr = querystring.parse(query)["q"];	//请求参数q的值
-	console.log("\t'search' query sring is "+queryStr);
+	console.log("\t'search' query sring is '"+queryStr+"'");
 	
-	queryStr=queryStr.replace(/"/g, "");	//替换，"
+	queryStr=queryStr.replace(/"||\\|\/|\*|\)|\%/g, "");	//替换，",空，\,/,*
 	
 	//if search query is null then redirect to home.html
 	if (queryStr==''){
@@ -393,11 +403,9 @@ function search(request,response,postData){
 var exec = require("child_process").exec;
 //实现一个既简单又实用的非阻塞操作：exec()
 function execShellCommand(shell,response){
-	
 	//------执行命令-----------
-	exec( shell , { timeout: 10000, maxBuffer: 20000*1024 },
+	exec( shell , { encoding: 'utf8',timeout: 10000, maxBuffer: 20000*1024 },
 	function (error, stdout, stderr) {
-
 		if(stderr){
 			console.error("\t'search' query shell has problem\n\t\t*** "+ stderr);
 			throw500(response);
@@ -440,7 +448,7 @@ function Shogun (request,response){
 	response.writeHead(200, {"Content-Type": "text/plain"});
 	var querystring = require('querystring');	//载入模块module
     response.write("your request is "
-			+ querystring.parse(query)["q"]+" &上杉謙信");
+			+ querystring.parse(query)["q"]+" vs 上杉謙信");
     response.end();
 }
 
@@ -461,8 +469,15 @@ function help (request,response){
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
+//process.stdin.pipe(process.stdout);
+//通过管道把标准输入转到标准输出
+
 process.stdin.on('data', function(chunk) {
-	process.stdout.write('data: ' + chunk);
+	
+	if(chunk=='\n')
+		process.stdout.write('>');
+	else
+		process.stdout.write("Your command is "+chunk);
 });
 
 process.stdin.on('end', function() {
@@ -479,9 +494,39 @@ process.on('uncaughtException', function(err) {
 });
 
 process.on('SIGINT', function() {
-  console.log('Got SIGINT.  Press Control-D to exit.');
+  console.log('Got SIGINT.Press Control-D to exit.');
 });
 
+//多核工作
+var numCPUs = require('os').cpus().length;
+var workers = {};
 
-start(route, handle);
-//启动服务器
+if (cluster.isMaster) {
+
+	//主进程
+	cluster.on('death',function(worker) {
+		//当一个进程结束时，启动另一个
+		delete workers[worker.pid];
+		worker = cluster.fork();
+		workers[worker.pid] = worker;
+	});
+
+	//初始化与CPU数量一样的进程
+	for (var i = 0; i < numCPUs; i++) {
+		var worker = cluster.fork();
+		workers[worker.pid] = worker;
+	}
+
+} else {
+	start(route, handle);
+	//启动服务器
+}
+
+//当主进程终止后，结束所有工作进程
+process.on('SIGTERM',function() {
+	for (var pid in workers) {
+		process.kill(pid);
+	}
+	process.exit(0);
+});
+

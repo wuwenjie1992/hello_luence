@@ -23,6 +23,9 @@ a simple native search engine power by luence and nodejs
   * if search query is null then redirect to home.html
   * LuceneSearch :
   * add New index method AI2 (unstable)
+ * 20131201
+  * LuceneSearch v 0.0.10 :
+  * improved AI2 method TO show hit results
 
 ##Author
  * [wuwenjie1992](http://wuwenjie.tk)

@@ -1,30 +1,30 @@
 <!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8">
-		<title>SearchNow</title>
-	</head>
+        <head>
+                <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8">
+                <title>SearchNow</title>
+        </head>
 
 <body style="font-family:Arial,Helvetica,sans-serif;font-size:small;text-align:center" 
-		onload="document.getElementById('lst-ib').focus()">
-	<div>
-		<table width="100%">
-			<tbody>
-				<tr>
-					<td width="80%" style="text-align:left">
-						<a href="/nodejs.png">图片</a>
-						<a href="http://price.zhjtong.com/1_ying_740_500.png">白银</a>
-						<a href="/about">关于 »</a>
-					</td>
-					<td width="20%" style="text-align:right">
-						<a href="https://duckduckgo.com/">duckduckgo</a> OR <a href="https://google.com.hk">google</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+                onload="document.getElementById('lst-ib').focus()">
+        <div>
+                <table width="100%">
+                        <tbody>
+                                <tr>
+                                        <td width="80%" style="text-align:left">
+                                                <a href="/nodejs.png">图片</a>
+                                                <a href="http://price.zhjtong.com/1_ying_740_500.png">白银</a>
+                                                <a href="/about">关于 »</a>
+                                        </td>
+                                        <td width="20%" style="text-align:right">
+                                                <a href="https://duckduckgo.com/">duckduckgo</a> OR <a href="https://google.com.hk">google</a>
+                                        </td>
+                                </tr>
+                        </tbody>
+                </table>
+        </div>
 
-<br>	<!-- 换行符-->
+<br>        <!-- 换行符-->
 <br>
 <br>
 <br>
@@ -32,30 +32,30 @@
 <br>
 
 <div style="text-align:center">
-	<div>
-		<canvas id="myCanvas" width="360" height="120" style="border:6px solid #c3c3c3;" 
-				onmouseover="Canvas_pause()" onmouseout="Canvas_run()">
-			<img id="hplogo" width="350" height="120"  src="/lucene.png">
-		</canvas>
-	</div>
-	
-	<div>
-		<form id="tsf" style="background:none" role="search" name="gs" 
-				method="GET" action="/search">
-		<div>
-			<input id="lst-ib" type="text" size="35" value="" name="q" >
-		</div>
-		
-		<div>
-			<input type="submit" name="btnG" maxlength="2048" value="搜索">
-		</div>
-	
-	</form>
-	
+        <div>
+                <canvas id="myCanvas" width="360" height="120" style="border:6px solid #c3c3c3;" 
+                                onmouseover="Canvas_pause()" onmouseout="Canvas_run()">
+                        <img id="hplogo" width="350" height="120"  src="/lucene.png">
+                </canvas>
+        </div>
+        
+        <div>
+                <form id="tsf" style="background:none" role="search" name="gs" 
+                                method="GET" action="/search">
+                <div>
+                        <input id="lst-ib" type="text" size="35" value="" name="q" >
+                </div>
+                
+                <div>
+                        <input type="submit" name="btnG" maxlength="2048" value="搜索">
+                </div>
+        
+        </form>
+        
 </div>
 
 
-<br>	<!-- 换行符-->
+<br>        <!-- 换行符-->
 <br>
 <br>
 <br>
@@ -63,21 +63,21 @@
 <br>
 
 <div id="user_info" style="font-size:x-small;padding-top:12px;text-align:center">
-	<a href="/about">登录</a>
+        <a href="/about">登录</a>
 </div>
 
 <div style="font-size:x-small;margin:2px;padding:2px;text-align:center">
-	<div style="margin:4px auto">
-	<a href="">设置</a>
-	-
-	<a href="mailto:wuwenjie0605@gmail.com">反馈</a>
-	-
-	<a href="/help">帮助</a>
+        <div style="margin:4px auto">
+        <a href="">设置</a>
+        -
+        <a href="mailto:wuwenjie0605@gmail.com">反馈</a>
+        -
+        <a href="/help">帮助</a>
 </div>
 
 
 <div>
-	Author <a href="http://www.wuwenjie.tk">wuwenjie</a>
+        Author <a href="http://www.wuwenjie.tk">wuwenjie</a>
 </div>
 
 </div>
@@ -86,14 +86,14 @@
 
 
 <div style="font-size:x-small;text-align:center">
-	Copyright © 
-		<script type="text/javascript">
-			var d = new Date();
-			document.write(d.getFullYear());
-		</script> - PowerBy
-	<a href="http://lucene.apache.org/">lucene 4.4</a>
-	&
-	<a href="http://nodejs.org/">nodejs</a>
+        Copyright © 
+                <script type="text/javascript">
+                        var d = new Date();
+                        document.write(d.getFullYear());
+                </script> - PowerBy
+        <a href="http://lucene.apache.org/">lucene 4.4</a>
+        &
+        <a href="http://nodejs.org/">nodejs</a>
 </div>
 
 </body>
@@ -117,41 +117,41 @@ ctx.fillRect(0,0,600,700);
 ctx.fillStyle="#00ff00";
 
 YPositions.map(function(y,index){
-	
-	x=index*12;
-	
-	var Unicode_num=100+Math.random()*256;
-	
-	text = String.fromCharCode(Unicode_num);
+        
+        x=index*12;
+        
+        var Unicode_num=100+Math.random()*256;
+        
+        text = String.fromCharCode(Unicode_num);
 
-	ctx.fillText(text, x, y);
+        ctx.fillText(text, x, y);
 
-	if(y> high + Math.random()*1e4){
-		YPositions[index]=0;
-	}else{
-		ctx.fillStyle="#0f0";
-		YPositions[index]=y+12;
-	}
-	}); //YPositions
+        if(y> high + Math.random()*1e4){
+                YPositions[index]=0;
+        }else{
+                ctx.fillStyle="#0f0";
+                YPositions[index]=y+12;
+        }
+        }); //YPositions
 
 }; //draw
 //---------
 
 window.onload=function() {
-	Game_Interval=setInterval(draw,60);
+        Game_Interval=setInterval(draw,60);
 }
 
 
 function Canvas_pause(){
-	
-	if(typeof Game_Interval != "undefined") 
-		clearInterval(Game_Interval);
+        
+        if(typeof Game_Interval != "undefined") 
+                clearInterval(Game_Interval);
 }
 
 function Canvas_run(){
-	
-	Game_Interval=setInterval(draw,60);
-	
+        
+        Game_Interval=setInterval(draw,60);
+        
 }
 
 </script>

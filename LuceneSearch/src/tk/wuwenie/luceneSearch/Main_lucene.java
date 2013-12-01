@@ -198,7 +198,7 @@ public class Main_lucene {
 	// 显示帮助
 	private static void printHelp() {
 
-		String ver = "LUCENE_44";
+		String ver = "LUCENE_45";
 
 		String help_s = "\nLuceneSearch\n"
 				+ "v0.0.1 20130526-20130713\n"
@@ -209,6 +209,8 @@ public class Main_lucene {
 				+ "v0.0.6 20130903-20130906\n"
 				+ "v0.0.7 20130906-20130920\n"
 				+ "v0.0.8 20130920-20131103\n"
+				+ "v0.0.9 20131103-20131124\n"
+				+ "v0.0.10 20131124-20131201\n"
 				+ "\nAuthor wuwenjie\n"
 				+ "PowerBy Lucene "
 				+ ver
