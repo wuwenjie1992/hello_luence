@@ -155,6 +155,7 @@ public class Main_lucene {
 		// .println("\n\n---------TxtFileSearcher.SortQueryParserSearch---------\n\n");
 		TxtFileSearcher.SortQueryParserSearch(indexDir_s, searchstr,
 				SearchRange, order);
+		System.exit(0);
 
 	}
 
@@ -211,6 +212,7 @@ public class Main_lucene {
 				+ "v0.0.8 20130920-20131103\n"
 				+ "v0.0.9 20131103-20131124\n"
 				+ "v0.0.10 20131124-20131201\n"
+				+ "v0.0.11 20131201-20131208\n"
 				+ "\nAuthor wuwenjie\n"
 				+ "PowerBy Lucene "
 				+ ver

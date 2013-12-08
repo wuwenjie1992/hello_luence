@@ -25,7 +25,13 @@ a simple native search engine power by luence and nodejs
   * add New index method AI2 (unstable)
  * 20131201
   * LuceneSearch v 0.0.10 :
-  * improved AI2 method TO show hit results
+  * improved SQPS method TO show hit results
+ * 20131208
+  * hello_lucene.js :
+  * add result.html TO show results in text/html
+  * LuceneSearch v 0.0.11 :
+  * small change in SQPS
+
 
 ##Author
  * [wuwenjie1992](http://wuwenjie.tk)

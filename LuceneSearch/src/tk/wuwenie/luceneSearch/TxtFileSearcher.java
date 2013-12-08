@@ -333,12 +333,14 @@ public class TxtFileSearcher {
 
 			Date mod = new Date(modified);
 
-			Long size = Long.parseLong(document.get("size"));
+			Long size = null;
+			if (document.get("size") != null)
+				size = Long.parseLong(document.get("size"));
 
 			// String text = document.get("contents");
 			// Class Document get public final String get(String name)
 			// 返回name对应的字符串
-			System.out.println("File No:" + i + "\tdoc:" + hits[i].doc
+			System.out.println("\tResult No:" + i + "\tdoc:" + hits[i].doc
 					+ " score:" + hits[i].score + "\n\tPath:" + path
 					+ "\n\tName:" + name + "\tModified:" + mod.toString()
 					+ "\n\tSize:" + size);
@@ -359,7 +361,7 @@ public class TxtFileSearcher {
 		// ------------计时-------------
 		long endTime = new Date().getTime();
 		System.out.println("\nIt takes " + (endTime - startTime)
-				+ " milliseconds in SortQueryParserSearch.");
+				+ " milliseconds in SortQueryParserSearch.\n");
 
 	}// SortQueryParserSearch
 
@@ -374,6 +376,7 @@ public class TxtFileSearcher {
 
 			if ((file.length() >> 20) <= 2) {
 
+				// 读取文本
 				try {
 					BufferedReader input = new BufferedReader(new FileReader(
 							file));
@@ -396,17 +399,23 @@ public class TxtFileSearcher {
 
 					// System.out.println("sArray[" + i + "]" + sArray[i]);
 
+					// 过滤文本中的标签
+					text = text.replaceAll("<[^>]*>", "");
+
 					Pattern pat = Pattern.compile(".{0,20}" + sArray[i]
 							+ ".{0,30}");// .{0,15}三吴.{0,15}
 					Matcher mat = pat.matcher(text);
 					boolean rs = mat.find();
-					if (rs) {
-						outStr += "..." + mat.group(0);
+					if (rs) { // 如果匹配到
+						outStr += mat.group(0) + "...";
 					} else {
-						outStr += "";
+						if (text.length() >= 30) {
+							outStr = text.substring(0, 30);
+						} else {
+							outStr = text.substring(0, text.length());
+						}
 					}
-
-				}
+				}// for
 
 				System.out.println("\n\t" + outStr + "\n");
 			} else {
