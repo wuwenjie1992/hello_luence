@@ -267,7 +267,7 @@ public class TxtFileIndexer {
 		File data_f = new File(dataDir_s);
 
 		ArrayList<File> daf = findCompliantFile(data_f,
-				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|*\\.shtml)");
+				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
 		// 符合要求的文件 (.*\.txt|.*\.html|.*\.HTM|.*\.htm|.*\.HTML)
 
 		// ---------分组处理------------------
