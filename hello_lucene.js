@@ -8,7 +8,7 @@ var cluster = require('cluster');
 var server;
 var port = 6770; //监听端口
 var count = 0; //总共处理数
-var version = "0.0.7:20131207";
+var version = "0.0.8:20140202";
 
 var jarPath = "/home/wuwenjie/lucene.jar";
 var indexPath = "/media/linux_lenovo/L_index";
@@ -113,6 +113,12 @@ function route(handle, request, pathname, response, postData) {
 	console.log("Route : a request for " + pathname);
 
 	var realPath = pathname.replace(/^\//g, ""); //替换，^\/
+	realPath = decodeURIComponent(realPath); //编码的 URI 进行解码
+	console.log("Route : decodeURL :" + realPath);
+	
+	var cookie_str=request.headers["cookie"];
+	console.log("Route : cookies '" + cookie_str+"'.");
+	
 	if (typeof handle[pathname] === 'function') {
 		//如果handle[pathname]是函数
 		handle[pathname](request, response, postData);
@@ -140,9 +146,11 @@ function route(handle, request, pathname, response, postData) {
 function return200(response, type, str) {
 	console.log("Request OK !");
 	response.writeHead(200, {
-		"Content-Type": type
+		"Content-Type": type,
+		"Set-Cookie" : "visited=true; path=/;httponly"
 	});
-	//"text/plain"
+	//http://www.webryan.net/2011/08/wiki-of-http-cookie/
+	//http://cnodejs.org/topic/51e8e99ef4963ade0e44c934
 	response.write("" + str);
 	response.end();
 }
@@ -386,9 +394,12 @@ function search(request, response, postData) {
 	console.log("\t'search' request query is '" + query + "'");
 
 	var queryStr = querystring.parse(query)["q"]; //请求参数q的值
-	console.log("\t'search' query sring is '" + queryStr + "'");
+	console.log("\t'search' query string is '" + queryStr + "'");
 
-	queryStr = queryStr.replace(/"||\\|\/|\*|\)|\%/g, ""); //替换，",空，\,/,*
+	queryStr = queryStr.replace(/"|\s|\\|\/|\*|\)|\%|&|\^/g, ""); //替换 
+	console.log("\t'search' query str now '" + queryStr + "'");
+	
+	
 	//if search query is null then redirect to home.html
 	if (queryStr == '') {
 		return301(response, homePage);
@@ -437,12 +448,11 @@ function execShellCommand(shell, response) {
 						throw500(response);
 					} else {
 						return200(response, "text/html", file 
-						+ "<pre>" + stdout + "</pre>");
+						+ "<pre>" + stdout + "</pre></body></html>");
 					}
 				});
 			}
 			else {
-
 				console.error("Can not found resultPage!");
 				return200(response, "", stdout);
 			}

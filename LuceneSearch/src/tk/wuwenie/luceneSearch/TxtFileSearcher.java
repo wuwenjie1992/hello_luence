@@ -141,8 +141,8 @@ public class TxtFileSearcher {
 		}
 
 		// --------支持语句查询de查询类-----------
-		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
-		QueryParser qupa = new QueryParser(Version.LUCENE_45, range,
+		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_46);
+		QueryParser qupa = new QueryParser(Version.LUCENE_46, range,
 				luceneAnalyzer);
 		// public QueryParser(Version matchVersion,String f, Analyzer a)
 		// Create a query parser.
@@ -225,8 +225,8 @@ public class TxtFileSearcher {
 		IndexSearcher searcher = new IndexSearcher(reader);
 
 		// --------支持语句查询de查询类-----------
-		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_45);// 中文分析器
-		QueryParser qupa = new QueryParser(Version.LUCENE_45, SearchRange,
+		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_46);// 中文分析器
+		QueryParser qupa = new QueryParser(Version.LUCENE_46, SearchRange,
 				cluceneAnalyzer);
 		Query qParser = qupa.parse(searchstr);
 
@@ -341,9 +341,9 @@ public class TxtFileSearcher {
 			// Class Document get public final String get(String name)
 			// 返回name对应的字符串
 			System.out.println("\tResult No:" + i + "\tdoc:" + hits[i].doc
-					+ " score:" + hits[i].score + "\n\tPath:" + path
+					+ " score:" + hits[i].score + "\n\tPath: file://" + path
 					+ "\n\tName:" + name + "\tModified:" + mod.toString()
-					+ "\n\tSize:" + size);
+					+ "\n\tSize:" + size + " KB");
 
 			// Explanation explanation = searcher.explain(qParser, hits[i].doc);
 			// 返回一个说明文档介绍了如何对查询发还
@@ -374,7 +374,7 @@ public class TxtFileSearcher {
 
 		if (file.exists()) {
 
-			if ((file.length() >> 20) <= 2) {
+			if ((file.length() >> 20) <= 3) {
 
 				// 读取文本
 				try {
@@ -386,8 +386,8 @@ public class TxtFileSearcher {
 					while ((lntext = input.readLine()) != null)
 						buffer.append(lntext + "\n");
 
-					text = buffer.toString();
-					// System.out.println("\ntext:\n" + text);
+					// 过滤文本中的标签
+					text = buffer.toString().replaceAll("<[^>]*>", "");
 
 				} catch (IOException ioException) {
 					System.err.println("File Error!");
@@ -399,27 +399,29 @@ public class TxtFileSearcher {
 
 					// System.out.println("sArray[" + i + "]" + sArray[i]);
 
-					// 过滤文本中的标签
-					text = text.replaceAll("<[^>]*>", "");
-
 					Pattern pat = Pattern.compile(".{0,20}" + sArray[i]
-							+ ".{0,30}");// .{0,15}三吴.{0,15}
+							+ "[\\s\\S]{0,60}");// .{0,20}盦[\s\S]{0,60}
 					Matcher mat = pat.matcher(text);
 					boolean rs = mat.find();
 					if (rs) { // 如果匹配到
 						outStr += mat.group(0) + "...";
 					} else {
-						if (text.length() >= 30) {
-							outStr = text.substring(0, 30);
+						if (text.length() >= 60) {
+							outStr = text.substring(0, 60);
 						} else {
 							outStr = text.substring(0, text.length());
 						}
 					}
+					// 过滤文本中的标签
+					outStr = outStr.replaceAll("\n|\r", "");
 				}// for
 
-				System.out.println("\n\t" + outStr + "\n");
+				System.out.println("\n\t" + outStr + "\n\t");
+				text = null;
+				outStr = null;
 			} else {
-				System.out.println("\n\tfile too large !\n");
+				System.out
+						.println("\n\t【注意：文件太大(>3MB)，影响性能，自行查阅！file too large !】\n");
 			}
 		}
 

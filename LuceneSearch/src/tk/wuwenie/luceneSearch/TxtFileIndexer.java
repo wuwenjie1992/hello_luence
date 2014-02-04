@@ -75,7 +75,7 @@ public class TxtFileIndexer {
 		index_dir_cn = FSDirectory.open(indexDirCN);
 
 		// -----------初始化第二步：【分析器】和【索引写入器】---------------------
-		luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_45);
+		luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_46);
 		// 在文档被索引前，先要对文档内容进行分词处理，由 Analyzer 来做的
 		// Analyzer 类是一个抽象类，它有多个实现。针对不同的语言和应用需选择适合的 Analyzer
 		// Analyzer 把分词后的内容交给 IndexWriter 来建立索引
@@ -85,11 +85,11 @@ public class TxtFileIndexer {
 		// Builds an analyzer with the default stop words (STOP_WORDS_SET).
 		// Parameters:matchVersion - Lucene version to match See above
 		indexWriter = new IndexWriter(index_dir, new IndexWriterConfig(
-				Version.LUCENE_45, luceneAnalyzer));
+				Version.LUCENE_46, luceneAnalyzer));
 
-		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_45);// 中文分析器
+		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_46);// 中文分析器
 		indexWriter_cn = new IndexWriter(index_dir_cn, new IndexWriterConfig(
-				Version.LUCENE_45, chineseAnalyzer));
+				Version.LUCENE_46, chineseAnalyzer));
 	}
 
 	// 分析、创建索引
@@ -136,7 +136,7 @@ public class TxtFileIndexer {
 				index_ram_dir = new RAMDirectory(); // 构造【空内存目录】
 				indexWriter_ram = new IndexWriter(
 						index_ram_dir,
-						new IndexWriterConfig(Version.LUCENE_45, luceneAnalyzer));
+						new IndexWriterConfig(Version.LUCENE_46, luceneAnalyzer));
 				// 实例化【内存索引写入器】
 
 				indexWriter_ram.addDocument(document);
@@ -160,7 +160,7 @@ public class TxtFileIndexer {
 
 				indexWriter_ram = new IndexWriter(
 						index_ram_dir,
-						new IndexWriterConfig(Version.LUCENE_45, luceneAnalyzer));
+						new IndexWriterConfig(Version.LUCENE_46, luceneAnalyzer));
 			}
 
 		}
@@ -242,19 +242,19 @@ public class TxtFileIndexer {
 	public static void IndexerInAdvance(String indexDir_s) throws Exception {
 
 		// --------indexWriter初始化---------------
-		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_45);
+		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_46);
 		// 中文分析器，可以使用其他，庖丁解牛分词器 code.google.com/p/paoding/
 
 		indexDir = new File(indexDir_s);
 		nioD = new NIOFSDirectory(indexDir);
 
-		iwc = new IndexWriterConfig(Version.LUCENE_45, chineseAnalyzer);
+		iwc = new IndexWriterConfig(Version.LUCENE_46, chineseAnalyzer);
 
 		iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		// Creates a new index if one does not exist
 		// otherwise it opens the index and documents will be appended.
 
-		iwc.setRAMBufferSizeMB(1024);// 内存上限
+		iwc.setRAMBufferSizeMB(2048);// 内存上限
 		IndexWriterConfig.setDefaultWriteLockTimeout(10);
 
 		// http://space.itpub.net/28624388/viewspace-766134
@@ -267,7 +267,7 @@ public class TxtFileIndexer {
 		File data_f = new File(dataDir_s);
 
 		ArrayList<File> daf = findCompliantFile(data_f,
-				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
+				"(.*\\.txt|.*\\.TXT|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
 		// 符合要求的文件 (.*\.txt|.*\.html|.*\.HTM|.*\.htm|.*\.HTML)
 
 		// ---------分组处理------------------
@@ -282,22 +282,23 @@ public class TxtFileIndexer {
 		// -----IndexWriter设置------------
 		iwc.setMaxThreadStates(group + 2);
 		if ((fsize >> 2) >= 2)
-			iwc.setMaxBufferedDocs(fsize >> 2);
+			iwc.setMaxBufferedDocs((fsize >> 2) + 60);
 
-		System.out.println("\nRAMBufferSizeMB:" + iwc.getRAMBufferSizeMB()
-				+ "\nDefaultWriteLockTimeout:"
+		System.out.println("\nRAMBufferSizeMB:\t" + iwc.getRAMBufferSizeMB()
+				+ "\nDefaultWriteLockTimeout:\t"
 				+ IndexWriterConfig.getDefaultWriteLockTimeout()
-				+ "\nOpenMode:" + iwc.getOpenMode() + "\nIndexDeletionPolicy:"
-				+ iwc.getIndexDeletionPolicy() + "\nWriteLockTimeout:"
-				+ iwc.getWriteLockTimeout() + "\nMergePolicy:"
-				+ iwc.getMergePolicy() + "\nMaxThreadStates:"
-				+ iwc.getMaxThreadStates() + "\nReaderPooling:"
-				+ iwc.getReaderPooling() + "\nRAMPerThreadHardLimitMB:"
+				+ "\nOpenMode:\t" + iwc.getOpenMode()
+				+ "\nIndexDeletionPolicy:\t" + iwc.getIndexDeletionPolicy()
+				+ "\nWriteLockTimeout:\t" + iwc.getWriteLockTimeout()
+				+ "\nMergePolicy:\t" + iwc.getMergePolicy()
+				+ "\nMaxThreadStates:\t" + iwc.getMaxThreadStates()
+				+ "\nReaderPooling:\t" + iwc.getReaderPooling()
+				+ "\nRAMPerThreadHardLimitMB:\t"
 				+ iwc.getRAMPerThreadHardLimitMB()
-				+ "\nMaxBufferedDeleteTerms:" + iwc.getMaxBufferedDeleteTerms()
-				+ "\nMaxBufferedDocs:" + iwc.getMaxBufferedDocs()
-				+ "\nReaderTermsIndexDivisor:"
-				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:"
+				+ "\nMaxBufferedDeleteTerms:\t"
+				+ iwc.getMaxBufferedDeleteTerms() + "\nMaxBufferedDocs:\t"
+				+ iwc.getMaxBufferedDocs() + "\nReaderTermsIndexDivisor:\t"
+				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:\t"
 				+ iwc.getReaderTermsIndexDivisor() + "\n");
 
 		indexWriter_cn = new IndexWriter(nioD, iwc); // 重用已定义的IndexWriter
@@ -352,7 +353,7 @@ public class TxtFileIndexer {
 		File data_f = new File(dataDir_s);
 
 		ArrayList<File> daf = findCompliantFile(data_f,
-				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
+				"(.*\\.txt|.*\\.TXT|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
 		// 符合要求的文件 (.*\.txt|.*\.html|.*\.HTM|.*\.htm|.*\.HTML)
 
 		// ---------分组处理------------------
@@ -369,22 +370,23 @@ public class TxtFileIndexer {
 		// -----IndexWriter设置------------
 		iwc.setMaxThreadStates(group + 2);
 		if ((fsize >> 2) >= 2)
-			iwc.setMaxBufferedDocs(fsize >> 2);
+			iwc.setMaxBufferedDocs((fsize >> 2) + 60);
 
-		System.out.println("\nRAMBufferSizeMB:" + iwc.getRAMBufferSizeMB()
-				+ "\nDefaultWriteLockTimeout:"
+		System.out.println("\nRAMBufferSizeMB:\t" + iwc.getRAMBufferSizeMB()
+				+ "\nDefaultWriteLockTimeout:\t"
 				+ IndexWriterConfig.getDefaultWriteLockTimeout()
-				+ "\nOpenMode:" + iwc.getOpenMode() + "\nIndexDeletionPolicy:"
-				+ iwc.getIndexDeletionPolicy() + "\nWriteLockTimeout:"
-				+ iwc.getWriteLockTimeout() + "\nMergePolicy:"
-				+ iwc.getMergePolicy() + "\nMaxThreadStates:"
-				+ iwc.getMaxThreadStates() + "\nReaderPooling:"
-				+ iwc.getReaderPooling() + "\nRAMPerThreadHardLimitMB:"
+				+ "\nOpenMode:\t" + iwc.getOpenMode()
+				+ "\nIndexDeletionPolicy:\t" + iwc.getIndexDeletionPolicy()
+				+ "\nWriteLockTimeout:\t" + iwc.getWriteLockTimeout()
+				+ "\nMergePolicy:\t" + iwc.getMergePolicy()
+				+ "\nMaxThreadStates:\t" + iwc.getMaxThreadStates()
+				+ "\nReaderPooling:\t" + iwc.getReaderPooling()
+				+ "\nRAMPerThreadHardLimitMB:\t"
 				+ iwc.getRAMPerThreadHardLimitMB()
-				+ "\nMaxBufferedDeleteTerms:" + iwc.getMaxBufferedDeleteTerms()
-				+ "\nMaxBufferedDocs:" + iwc.getMaxBufferedDocs()
-				+ "\nReaderTermsIndexDivisor:"
-				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:"
+				+ "\nMaxBufferedDeleteTerms:\t"
+				+ iwc.getMaxBufferedDeleteTerms() + "\nMaxBufferedDocs:\t"
+				+ iwc.getMaxBufferedDocs() + "\nReaderTermsIndexDivisor:\t"
+				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:\t"
 				+ iwc.getReaderTermsIndexDivisor() + "\n");
 
 		indexWriter_cn = new IndexWriter(nioD, iwc); // 重用已定义的IndexWriter
@@ -451,37 +453,42 @@ public class TxtFileIndexer {
 		int subf_l;
 		int CommitSpace; // 提交间隔
 		boolean UpdateOrNot;
-		Document doc_cn;
+		Document doc_cn = null;
+		long total_process_size; // 处理文件总大小
+		long file_size_k;
+		Reader txtReader = null;
+		File processing = null;
 
 		public WriteDocThread(String name, List<File> f, boolean Update) {
 			super(name);
 			this.subf = f;
 			subf_l = subf.size();
-			CommitSpace = getGroupSize(subf_l) * 5; // 提交间隔
-			// System.out.println("subf_l:" + subf_l + " CommitSpace:"
-			// + CommitSpace);
+			CommitSpace = getGroupSize(subf_l) * 6; // 提交间隔
 			UpdateOrNot = Update;
 		}
 
 		@Override
 		public void run() {
 
-			// this.setPriority(Thread.NORM_PRIORITY);
-
 			// ---------------建立索引--------------------
 			int i;
+			// total_process_size = 0;
+
 			for (i = 1; i <= subf_l; i++) {
 
 				try {
 
-					File processing = subf.get(i - 1);
+					processing = subf.get(i - 1);
 
-					long file_size_k = processing.length() >> 10;
+					file_size_k = processing.length() >> 10;
+					// total_process_size += file_size_k >> 10;// MB
 
 					doc_cn = new Document();
 
 					doc_cn.add(new TextField("path", processing
 							.getCanonicalPath(), Field.Store.YES));
+					// System.out.println("indexing:"
+					// + processing.getCanonicalPath());
 
 					doc_cn.add(new LongField("modified", processing
 							.lastModified(), Field.Store.YES));
@@ -493,7 +500,7 @@ public class TxtFileIndexer {
 					doc_cn.add(new TextField("name", processing.getName(),
 							Field.Store.YES));
 
-					Reader txtReader = new FileReader(processing);
+					txtReader = new FileReader(processing);
 					doc_cn.add(new TextField("contents", txtReader));
 
 					if (!UpdateOrNot) {
@@ -509,16 +516,19 @@ public class TxtFileIndexer {
 
 						indexWriter_cn.commit();
 						doc_cn = null;
+						txtReader = null;
+						processing = null;
 
 						Runtime runtime = Runtime.getRuntime();
 
 						long UsedMemory = (runtime.totalMemory() - runtime
 								.freeMemory()) >> 20;
 
-						System.out
-								.println("Thread " + this.getName()
-										+ "  commit " + i + " UsedMemory:"
-										+ UsedMemory);
+						// total_process_size = UsedMemory >> 8;
+
+						System.out.println("Thread " + this.getName()
+								+ "  commit " + i + " UsedMemory:" + UsedMemory
+								+ " MB");
 
 						this.setPriority(Thread.MAX_PRIORITY);
 					}
@@ -530,29 +540,61 @@ public class TxtFileIndexer {
 			}// for
 
 			try {
-				indexWriter_cn.forceMerge(120);
+				indexWriter_cn.forceMerge(240);
 				// 强制合并策略:合并段直到有<= maxNumSegments
 				// indexWriter.optimize();
 				indexWriter_cn.commit();
-				// this.setPriority(Thread.MIN_PRIORITY);
 				doc_cn = null;
+				this.setPriority(Thread.MIN_PRIORITY);
+				this.finalize();
 
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (Throwable e) {
 				e.printStackTrace();
 			}
 
 			System.out.println("thread " + this.getName() + " completed.");
-
-			// try {
-			// this.finalize();
-			// } catch (Throwable e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-			// }
-
 		}// run
 
 	}// WriteDocThread
+
+	public static void addIndexToIndex(String index_src, String indexBeADD)
+			throws Exception {
+		IndexerInAdvance(indexBeADD);
+
+		// -----IndexWriter设置------------
+		iwc.setMaxThreadStates(2);
+		iwc.setMaxBufferedDocs(260);
+
+		System.out.println("\nRAMBufferSizeMB:\t" + iwc.getRAMBufferSizeMB()
+				+ "\nDefaultWriteLockTimeout:\t"
+				+ IndexWriterConfig.getDefaultWriteLockTimeout()
+				+ "\nOpenMode:\t" + iwc.getOpenMode()
+				+ "\nIndexDeletionPolicy:\t" + iwc.getIndexDeletionPolicy()
+				+ "\nWriteLockTimeout:\t" + iwc.getWriteLockTimeout()
+				+ "\nMergePolicy:\t" + iwc.getMergePolicy()
+				+ "\nMaxThreadStates:\t" + iwc.getMaxThreadStates()
+				+ "\nReaderPooling:\t" + iwc.getReaderPooling()
+				+ "\nRAMPerThreadHardLimitMB:\t"
+				+ iwc.getRAMPerThreadHardLimitMB()
+				+ "\nMaxBufferedDeleteTerms:\t"
+				+ iwc.getMaxBufferedDeleteTerms() + "\nMaxBufferedDocs:\t"
+				+ iwc.getMaxBufferedDocs() + "\nReaderTermsIndexDivisor:\t"
+				+ iwc.getReaderTermsIndexDivisor() + "\nTermIndexInterval:\t"
+				+ iwc.getReaderTermsIndexDivisor() + "\n");
+
+		indexWriter_cn = new IndexWriter(nioD, iwc); // 重用已定义的IndexWriter
+		// 一个IndexWriter对象可以被多个线程所共享
+		indexWriter_cn.forceMerge(240);
+		// 强制合并策略:合并段直到有<= maxNumSegments
+
+		NIOFSDirectory[] fs = { new NIOFSDirectory(new File(index_src)) };
+		indexWriter_cn.addIndexes(fs);
+		indexWriter_cn.close();
+		System.out.println("已完成合并! ");
+
+	}
 
 	// --------------------------------------------------------------------------
 	// Concurrent 并发 与多线程 性能区别不大 不建议使用
@@ -562,7 +604,7 @@ public class TxtFileIndexer {
 		File data_f = new File(dataDir_s);
 
 		ArrayList<File> daf = findCompliantFile(data_f,
-				"(.*\\.txt|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML)");
+				"(.*\\.txt|.*\\.TXT|.*\\.html|.*\\.HTM|.*\\.htm|.*\\.HTML|.*\\.shtml)");
 
 		// ---------分组处理------------------
 		int fsize = daf.size();

@@ -31,7 +31,11 @@ a simple native search engine power by luence and nodejs
   * add result.html TO show results in text/html
   * LuceneSearch v 0.0.11 :
   * small change in SQPS
-
+ * 20140204
+  * hello_luence.js :
+  * add decodeURIComponent TODO such as chinese char URL
+  * LuceneSearch v 0.0.13 :
+  * ADD METHOD addIndexToIndex TODO make new index THEN merger indexs
 
 ##Author
  * [wuwenjie1992](http://wuwenjie.tk)

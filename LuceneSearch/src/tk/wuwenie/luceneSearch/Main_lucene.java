@@ -66,6 +66,15 @@ public class Main_lucene {
 					if (args.length >= i + 3) {
 						makeIndexAdvance2(args[i + 1], args[i + 2]);
 					}
+
+				} else if (args[i].equals("-ADD")) { // 如果是合并两个索引
+
+					if (args.length >= i + 3) {
+						addIndexToIndex(args[i + 1], args[i + 2]);
+					} else {
+						System.err
+								.println("-ADD [dir_index-src] [dir_index-be-add]");
+					}
 				} else if (args[i].equals("-S")) {// 如果是普通查询
 
 					if (args.length >= i + 3) {
@@ -119,6 +128,15 @@ public class Main_lucene {
 		}
 
 	}// main
+
+	private static void addIndexToIndex(String string, String string2) {
+		try {
+			TxtFileIndexer.addIndexToIndex(string, string2);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	public static void makeIndexAdvance2(String f, String i) {
 
@@ -184,8 +202,6 @@ public class Main_lucene {
 
 	static void Serach(String file_saveIndex, String Query) {
 		try {
-			// System.out
-			// .println("\n\n---------TxtFileSearcher.search---------\n\n");
 
 			TxtFileSearcher.search(file_saveIndex, Query);
 
@@ -199,7 +215,7 @@ public class Main_lucene {
 	// 显示帮助
 	private static void printHelp() {
 
-		String ver = "LUCENE_45";
+		String ver = "LUCENE_46";
 
 		String help_s = "\nLuceneSearch\n"
 				+ "v0.0.1 20130526-20130713\n"
@@ -213,6 +229,8 @@ public class Main_lucene {
 				+ "v0.0.9 20131103-20131124\n"
 				+ "v0.0.10 20131124-20131201\n"
 				+ "v0.0.11 20131201-20131208\n"
+				+ "v0.0.12 20131208-20140112\n"
+				+ "v0.0.13 20140112-20140118\n"
 				+ "\nAuthor wuwenjie\n"
 				+ "PowerBy Lucene "
 				+ ver
@@ -222,6 +240,7 @@ public class Main_lucene {
 				+ "-I make Index \t-I [file_tobeIndex] [file_saveIndex] {-UseRAM} -{showToken}\n"
 				+ "-AI make Index In Advance \t -AI [file_tobeIndex] [file_saveIndex]\n"
 				+ "-AI2 make Index In Advance \t -AI2 [file_tobeIndex] [file_saveIndex]\n"
+				+ "-ADD add index to a index \t -ADD [dir_index-src] [dir_index-be-add]\n"
 				+ "-S search \t-S [file_saveIndex] [Query]\n"
 				+ "-QPS QueryParserSearch \t-QPS [Index] [SpecialQuery] [Range]\n"
 				+ "-SQPS SortQueryParserSearch \t-SQPS [file_Index] [Query] [SearchRange] [Order]\n"
