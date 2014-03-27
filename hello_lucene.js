@@ -8,7 +8,7 @@ var cluster = require('cluster');
 var server;
 var port = 6770; //监听端口
 var count = 0; //总共处理数
-var version = "0.0.8:20140202";
+var version = "0.0.9:20140202";
 
 var jarPath = "/home/wuwenjie/lucene.jar";
 var indexPath = "/media/linux_lenovo/L_index";
@@ -417,7 +417,15 @@ function search(request, response, postData) {
 		console.log("\t'search' query shell_name is \n\t\t" + shell_all + ".");
 
 		console.time('exec search'); //记时
-		execShellCommand(shell_all, response); //使用本地shell执行命令并返回请求
+		
+		var m =querystring.parse(query)["m"]; //请求参数q的值
+		console.log("\t'search' query string is '" + m + "'");
+		if(m){
+			execShellCommand(shell_all, response,true); //使用本地shell执行命令并返回请求
+		}else{
+			execShellCommand(shell_all, response,false); //使用本地shell执行命令并返回请求
+		}
+		
 		console.timeEnd('exec search');
 	}
 }
@@ -425,7 +433,7 @@ function search(request, response, postData) {
 //------执行命令-----------
 var exec = require("child_process").exec;
 //实现一个既简单又实用的非阻塞操作：exec()
-function execShellCommand(shell, response) {
+function execShellCommand(shell, response, only) {
 	//------执行命令-----------
 	exec(shell, {
 		encoding: 'utf8',
@@ -447,8 +455,13 @@ function execShellCommand(shell, response) {
 					if (err) {
 						throw500(response);
 					} else {
-						return200(response, "text/html", file 
-						+ "<pre>" + stdout + "</pre></body></html>");
+						if(only){
+							return200(response, "text/html", 
+								"<pre id=txtHint>" + stdout + "</pre>");
+						} else {
+							return200(response, "text/html", file 
+								+ "<pre id=txtHint>" + stdout + "</pre></body></html>");
+						}
 					}
 				});
 			}

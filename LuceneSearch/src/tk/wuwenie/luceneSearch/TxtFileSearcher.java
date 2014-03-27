@@ -141,8 +141,8 @@ public class TxtFileSearcher {
 		}
 
 		// --------支持语句查询de查询类-----------
-		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_46);
-		QueryParser qupa = new QueryParser(Version.LUCENE_46, range,
+		Analyzer luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_47);
+		QueryParser qupa = new QueryParser(Version.LUCENE_47, range,
 				luceneAnalyzer);
 		// public QueryParser(Version matchVersion,String f, Analyzer a)
 		// Create a query parser.
@@ -225,8 +225,8 @@ public class TxtFileSearcher {
 		IndexSearcher searcher = new IndexSearcher(reader);
 
 		// --------支持语句查询de查询类-----------
-		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_46);// 中文分析器
-		QueryParser qupa = new QueryParser(Version.LUCENE_46, SearchRange,
+		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_47);// 中文分析器
+		QueryParser qupa = new QueryParser(Version.LUCENE_47, SearchRange,
 				cluceneAnalyzer);
 		Query qParser = qupa.parse(searchstr);
 
@@ -304,10 +304,6 @@ public class TxtFileSearcher {
 		// Collector.collect(int) is called for every matching document.
 		TopDocs results = collector.topDocs();
 
-		// searchAfter Finds the top n hits for query where all results are
-		// after a previous result (after).
-		// http://www.cnblogs.com/yuanermen/archive/2012/02/09/2343993.html
-
 		// MultiFieldQueryParser
 		// http://blog.csdn.net/lizhihai_99/article/details/5559423
 
@@ -364,6 +360,180 @@ public class TxtFileSearcher {
 				+ " milliseconds in SortQueryParserSearch.\n");
 
 	}// SortQueryParserSearch
+
+	// 分页处理 增加参数 页面条目数 当前页数
+	public static void SearchForPages(String indexDir_s, String searchstr,
+			String SearchRange, String order, String PageSize_s,
+			String CurrentPageNum_s) throws Exception {
+
+		long startTime = new Date().getTime();
+
+		// ----------RAMDirectory-----------
+		File indexDir = new File(indexDir_s);
+		if (!indexDir.exists()) {
+			System.err.println("The Lucene index is not exist! Exit!");
+			return;
+		}
+		FSDirectory FSdirectory = FSDirectory.open(indexDir);
+
+		int PageSize = 0;
+		int CurrentPageNum = 0;
+		try {
+			PageSize = Integer.parseInt(PageSize_s);
+			CurrentPageNum = Integer.parseInt(CurrentPageNum_s);
+		} catch (NumberFormatException e) {
+			System.err.println("NumberFormatException !");
+		}
+
+		if (PageSize < 10) {
+			System.out.println("PageSize is less than 10 ! set to 10 !");
+			PageSize = 10;
+		}
+		if (CurrentPageNum < 1) {
+			System.out.println("CurrentPageNum is less than 1 ! set to 1 !");
+			CurrentPageNum = 1;
+		}
+
+		IndexReader reader = DirectoryReader.open(FSdirectory); // RAMdry
+		IndexSearcher searcher = new IndexSearcher(reader);
+
+		Analyzer cluceneAnalyzer = new CJKAnalyzer(Version.LUCENE_47);// 中文分析器
+		QueryParser qupa = new QueryParser(Version.LUCENE_47, SearchRange,
+				cluceneAnalyzer);
+		Query qParser = qupa.parse(searchstr);
+
+		Sort sort = new Sort();
+
+		if (order == "index") {
+			docDefault = docNum;
+		} else if (order == "modified") {
+			docDefault = new SortField(order, SortField.Type.LONG);
+		} else if (order == "size") {
+			docDefault = new SortField(order, SortField.Type.LONG);
+		} else if (order == null) {
+			docDefault = new SortField(order, SortField.Type.STRING);
+		}
+		sort.setSort(docDefault);
+
+		TopFieldCollector collector = TopFieldCollector.create(sort,
+				PageSize * 99999, true, true, true, sort == null);
+
+		searcher.search(qParser, collector);
+		TopDocs results = collector.topDocs();
+
+		// MultiFieldQueryParser
+		// http://blog.csdn.net/lizhihai_99/article/details/5559423
+
+		// ----------------------
+		// setSimilarity getSimilarity
+		// termStatistics
+		// ----------------------
+
+		ScoreDoc[] hits = results.scoreDocs;
+		int numTotalHits = results.totalHits;
+
+		System.out.println(numTotalHits + " total matching documents");
+
+		Document document;
+		String path, name;
+		Long modified;
+		Date mod;
+		Long size = 0L;
+
+		int CurrentStartNum = PageSize * (CurrentPageNum - 1);
+		// CurrentPageNum 1,2,3...
+
+		if (CurrentStartNum > numTotalHits) {
+			CurrentStartNum = numTotalHits - PageSize;
+			CurrentPageNum = numTotalHits / PageSize;
+			System.out.println("CurrentPageNum " + CurrentPageNum);
+		}
+
+		// 分页处理
+		if (numTotalHits > PageSize) {
+
+			if (CurrentPageNum == 1) {
+
+				document = searcher.doc(hits[0].doc);
+
+				path = document.get("path");
+				name = document.get("name");
+				modified = Long.parseLong(document.get("modified"));
+				mod = new Date(modified);
+				if (document.get("size") != null)
+					size = Long.parseLong(document.get("size"));
+
+				System.out.println("\tResult No: 0" + "\tdoc:" + hits[0].doc
+						+ " score:" + hits[0].score + "\n\tPath: file://"
+						+ path + "\n\tName:" + name + "\tModified:"
+						+ mod.toString() + "\n\tSize:" + size + " KB");
+
+				getMatchString(path, searchstr);
+			}
+
+			System.out.println("Now Page " + CurrentPageNum
+					+ "\nCurrentStartNum " + CurrentStartNum);
+
+			TopDocs PageDoc = searcher.searchAfter(hits[CurrentStartNum],
+					qParser, PageSize);
+			// searchAfter Finds the top n hits for query where all results are
+			// after a previous result (after).
+			// http://www.cnblogs.com/yuanermen/archive/2012/02/09/2343993.html
+
+			for (int i = 0; i < PageDoc.scoreDocs.length; i++) {
+
+				document = searcher.doc(PageDoc.scoreDocs[i].doc);
+
+				path = document.get("path");
+				name = document.get("name");
+				modified = Long.parseLong(document.get("modified"));
+				mod = new Date(modified);
+
+				if (document.get("size") != null)
+					size = Long.parseLong(document.get("size"));
+
+				System.out.println("\tAfter Result No:" + (CurrentStartNum + i)
+						+ "\tdoc:" + PageDoc.scoreDocs[i].doc + " score:"
+						+ PageDoc.scoreDocs[i].score + "\n\tPath: file://"
+						+ path + "\n\tName:" + name + "\tModified:"
+						+ mod.toString() + "\n\tSize:" + size + " KB");
+
+				getMatchString(path, searchstr);
+
+			}
+		} else {
+			for (int i = 0; i < hits.length; i++) {
+
+				document = searcher.doc(hits[i].doc);
+
+				path = document.get("path");
+				name = document.get("name");
+				modified = Long.parseLong(document.get("modified"));
+				mod = new Date(modified);
+
+				if (document.get("size") != null)
+					size = Long.parseLong(document.get("size"));
+
+				System.out.println("\tResult No:" + i + "\tdoc:" + hits[i].doc
+						+ " score:" + hits[i].score + "\n\tPath: file://"
+						+ path + "\n\tName:" + name + "\tModified:"
+						+ mod.toString() + "\n\tSize:" + size + " KB");
+
+				getMatchString(path, searchstr);
+
+			}
+
+		}
+
+		reader.close();
+		FSdirectory.close();
+
+		// ------------计时-------------
+		long endTime = new Date().getTime();
+		System.out.println("\nIt takes " + (endTime - startTime)
+				+ " milliseconds in SearchForPages.\n");
+
+	}// SearchForPages
 
 	// 进入文件查找字符
 	public static void getMatchString(String file_path, String searchstr) {

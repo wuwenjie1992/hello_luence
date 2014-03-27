@@ -1,8 +1,40 @@
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <title>Search Now Result</title> 
+
+<script type="text/javascript">
+function showHint(str)
+{
+var xmlhttp;
+
+if (str.length==0)
+  { 
+  document.getElementById("txtHint").innerHTML="";
+  return;
+  }
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.onreadystatechange=function()
+  {
+  if (xmlhttp.readyState==4 && xmlhttp.status==200)
+    {
+    document.getElementById("txtHint").innerHTML=xmlhttp.responseText;
+    }
+  }
+xmlhttp.open("GET","/search?q="+str+"&m=ajax",true);
+xmlhttp.send();
+}
+</script>
 </head>
-<body style="background-color:#71b1be">
+
+<body style="color:green;background-color:#151515">
 
 <table width="100%"> 
 <tbody> 
@@ -15,7 +47,7 @@
 
 <div style="text-align:center"> 
 <form id="tsf" style="background:none" role="search" name="gs" method="GET" action="/search"> 
-<input id="lst-ib" type="text" size="35" value="" name="q" /> 
+<input id="lst-ib" type="text" size="35" value="" name="q" onkeyup="showHint(this.value)"/> 
 <input type="submit" name="btnG" maxlength="20" value="搜索" /> 
 </form> 
 </div>

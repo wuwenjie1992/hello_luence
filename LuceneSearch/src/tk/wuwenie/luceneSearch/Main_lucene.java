@@ -110,6 +110,22 @@ public class Main_lucene {
 						System.err
 								.println("-SQPS file_saveIndex Query Range Order");
 					}
+				} else if (args[i].equals("-PAS")) { // 如果是分页查询
+
+					if (args.length >= i + 7) {
+
+						try {
+							SearchForPages(args[i + 1], args[i + 2],
+									args[i + 3], args[i + 4], args[i + 5],
+									args[i + 6]);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+
+					} else {
+						System.err
+								.println("-PAS file_saveIndex Query Range Order PageSize CurrentPage");
+					}
 				}
 
 				else if (args[i].equals("-help")) {
@@ -128,6 +144,17 @@ public class Main_lucene {
 		}
 
 	}// main
+
+	private static void SearchForPages(String string, String string2,
+			String string3, String string4, String string5, String string6) {
+		try {
+			TxtFileSearcher.SearchForPages(string, string2, string3, string4,
+					string5, string6);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	private static void addIndexToIndex(String string, String string2) {
 		try {
@@ -180,11 +207,7 @@ public class Main_lucene {
 	public static void QPSearch(String indexDir_s, String searchstr,
 			String range) {
 
-		// System.out
-		// .println("\n\n---------TxtFileSearcher.QueryParserSearch---------\n\n");
 		TxtFileSearcher.QueryParserSearch(indexDir_s, searchstr, range);
-
-		// System.out.println("\n\n");
 
 	}
 
@@ -215,7 +238,7 @@ public class Main_lucene {
 	// 显示帮助
 	private static void printHelp() {
 
-		String ver = "LUCENE_46";
+		String ver = "LUCENE_47";
 
 		String help_s = "\nLuceneSearch\n"
 				+ "v0.0.1 20130526-20130713\n"
@@ -231,6 +254,8 @@ public class Main_lucene {
 				+ "v0.0.11 20131201-20131208\n"
 				+ "v0.0.12 20131208-20140112\n"
 				+ "v0.0.13 20140112-20140118\n"
+				+ "v0.0.14 20140118-20140322\n"
+				+ "v0.0.15 20140122-20140325\n"
 				+ "\nAuthor wuwenjie\n"
 				+ "PowerBy Lucene "
 				+ ver
@@ -246,6 +271,7 @@ public class Main_lucene {
 				+ "-SQPS SortQueryParserSearch \t-SQPS [file_Index] [Query] [SearchRange] [Order]\n"
 				+ "\t\t[SearchRange] contents name size modified path\n"
 				+ "\t\t[Order] Null {Default,score,relevance} index path modified size contents\n"
+				+ "-PAS SearchForPages \t-PAS [file_Index] [Query] [SearchRange] [Order] [PageSize] [CurrentPage]\n"
 				+ "-help help\n";
 
 		System.out.println(help_s);

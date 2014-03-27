@@ -75,7 +75,7 @@ public class TxtFileIndexer {
 		index_dir_cn = FSDirectory.open(indexDirCN);
 
 		// -----------初始化第二步：【分析器】和【索引写入器】---------------------
-		luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_46);
+		luceneAnalyzer = new StandardAnalyzer(Version.LUCENE_47);
 		// 在文档被索引前，先要对文档内容进行分词处理，由 Analyzer 来做的
 		// Analyzer 类是一个抽象类，它有多个实现。针对不同的语言和应用需选择适合的 Analyzer
 		// Analyzer 把分词后的内容交给 IndexWriter 来建立索引
@@ -85,11 +85,11 @@ public class TxtFileIndexer {
 		// Builds an analyzer with the default stop words (STOP_WORDS_SET).
 		// Parameters:matchVersion - Lucene version to match See above
 		indexWriter = new IndexWriter(index_dir, new IndexWriterConfig(
-				Version.LUCENE_46, luceneAnalyzer));
+				Version.LUCENE_47, luceneAnalyzer));
 
-		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_46);// 中文分析器
+		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_47);// 中文分析器
 		indexWriter_cn = new IndexWriter(index_dir_cn, new IndexWriterConfig(
-				Version.LUCENE_46, chineseAnalyzer));
+				Version.LUCENE_47, chineseAnalyzer));
 	}
 
 	// 分析、创建索引
@@ -136,7 +136,7 @@ public class TxtFileIndexer {
 				index_ram_dir = new RAMDirectory(); // 构造【空内存目录】
 				indexWriter_ram = new IndexWriter(
 						index_ram_dir,
-						new IndexWriterConfig(Version.LUCENE_46, luceneAnalyzer));
+						new IndexWriterConfig(Version.LUCENE_47, luceneAnalyzer));
 				// 实例化【内存索引写入器】
 
 				indexWriter_ram.addDocument(document);
@@ -160,7 +160,7 @@ public class TxtFileIndexer {
 
 				indexWriter_ram = new IndexWriter(
 						index_ram_dir,
-						new IndexWriterConfig(Version.LUCENE_46, luceneAnalyzer));
+						new IndexWriterConfig(Version.LUCENE_47, luceneAnalyzer));
 			}
 
 		}
@@ -242,13 +242,13 @@ public class TxtFileIndexer {
 	public static void IndexerInAdvance(String indexDir_s) throws Exception {
 
 		// --------indexWriter初始化---------------
-		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_46);
+		chineseAnalyzer = new CJKAnalyzer(Version.LUCENE_47);
 		// 中文分析器，可以使用其他，庖丁解牛分词器 code.google.com/p/paoding/
 
 		indexDir = new File(indexDir_s);
 		nioD = new NIOFSDirectory(indexDir);
 
-		iwc = new IndexWriterConfig(Version.LUCENE_46, chineseAnalyzer);
+		iwc = new IndexWriterConfig(Version.LUCENE_47, chineseAnalyzer);
 
 		iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
 		// Creates a new index if one does not exist
@@ -463,7 +463,7 @@ public class TxtFileIndexer {
 			super(name);
 			this.subf = f;
 			subf_l = subf.size();
-			CommitSpace = getGroupSize(subf_l) * 6; // 提交间隔
+			CommitSpace = getGroupSize(subf_l) * 7; // 提交间隔
 			UpdateOrNot = Update;
 		}
 
@@ -471,7 +471,7 @@ public class TxtFileIndexer {
 		public void run() {
 
 			// ---------------建立索引--------------------
-			int i;
+			int i, j = 0;
 			// total_process_size = 0;
 
 			for (i = 1; i <= subf_l; i++) {
@@ -525,12 +525,30 @@ public class TxtFileIndexer {
 								.freeMemory()) >> 20;
 
 						// total_process_size = UsedMemory >> 8;
-
+						j++;
 						System.out.println("Thread " + this.getName()
 								+ "  commit " + i + " UsedMemory:" + UsedMemory
-								+ " MB");
+								+ " MB " + CommitSpace + ";" + j);
 
 						this.setPriority(Thread.MAX_PRIORITY);
+
+					}
+					// 如果 余下的文件数量 小于 提交间隔数
+					if (j > 0 && ((subf_l - i) < CommitSpace)) {
+
+						CommitSpace = CommitSpace / 2;
+						if (i % CommitSpace == 0) {
+							indexWriter_cn.commit();
+							doc_cn = null;
+							txtReader = null;
+							processing = null;
+
+							System.out.println("Thread " + this.getName() + " "
+									+ i + ";" + (subf_l - i) + ";"
+									+ CommitSpace + ";" + j);
+						}
+						CommitSpace = CommitSpace * 2;
+
 					}
 
 				} catch (IOException e) {
@@ -556,7 +574,6 @@ public class TxtFileIndexer {
 
 			System.out.println("thread " + this.getName() + " completed.");
 		}// run
-
 	}// WriteDocThread
 
 	public static void addIndexToIndex(String index_src, String indexBeADD)

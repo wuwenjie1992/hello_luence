@@ -36,7 +36,12 @@ a simple native search engine power by luence and nodejs
   * add decodeURIComponent TODO such as chinese char URL
   * LuceneSearch v 0.0.13 :
   * ADD METHOD addIndexToIndex TODO make new index THEN merger indexs
-
+ * 20140327
+  * hello_luence.js :
+  * modify execShellCommand TODO only show search result
+  * LuceneSearch v 0.0.15 :
+  * add SearchForPages TODO use searchAfter to show result in pages
+  
 ##Author
  * [wuwenjie1992](http://wuwenjie.tk)
  
